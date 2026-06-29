@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beehiiv — Verified Teardown · Tearline</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bar"><div class="wrap">
+  <a class="brand" href="index.html" style="color:inherit">Tear<b>line</b></a>
+  <span class="tag">Sample teardown</span>
+</div></div>
+
+<main class="wrap report" style="padding-top:34px">
+  <a class="back" href="index.html">← Back to Tearline</a>
+  <span class="badge" style="margin:16px 0 0;display:inline-block">Verified sample</span>
+  <h1 class="serif">Beehiiv — Competitive Teardown</h1>
+  <p class="meta">June 2026 · ~3-min read · every numeric claim mapped to a numbered source below · estimates and unverifiable items tagged.</p>
+
+  <h2>1 · What it is + positioning</h2>
+  <p>Beehiiv is a newsletter/creator platform founded in 2021 by ex–Morning Brew operators (CEO Tyler Denk)<a class="src" href="https://www.inc.com/ben-sherry/with-beehiiv-tyler-denk-is-riding-the-newsletter-wave/91022171"> [1]</a>. The pitch isn't "a place to write" but <strong>the operating system to grow and monetize an audience</strong> — editor + site + email + a built-in growth/ad machine<a class="src" href="https://www.beehiiv.com/about"> [2]</a>. Headline weapon: it takes <strong>0% of paid-subscription revenue</strong> (you pay only Stripe's fee)<a class="src" href="https://www.beehiiv.com/pricing"> [4]</a> — a direct shot at Substack's 10% cut<a class="src" href="https://sacra.com/c/substack/"> [10]</a>.</p>
+  <table>
+    <tr><th>Plan</th><th>Price (annual)</th><th>Subs</th><th>Hook</th></tr>
+    <tr><td>Launch</td><td>Free</td><td>≤2,500</td><td>Unlimited sends, site, custom domains</td></tr>
+    <tr><td>Scale</td><td>$43/mo</td><td>≤100k</td><td>Ad Network, Boosts, 0% take-rate</td></tr>
+    <tr><td>Max</td><td>$96/mo</td><td>≤100k</td><td>Remove branding, sponsorship storefront</td></tr>
+    <tr><td>Enterprise</td><td>Custom</td><td>100k+</td><td>Dedicated IPs, Send API, SSO</td></tr>
+  </table>
+  <p class="srcs">Pricing verified at beehiiv.com/pricing, June 2026<a class="src" href="https://www.beehiiv.com/pricing"> [4]</a>.</p>
+
+  <h2>2 · Real traction</h2>
+  <p><strong>Platform scale</strong> (beehiiv's own State of Newsletters 2026 — self-reported): 28B emails sent in 2025, 255M unique readers, 41%+ open rates<a class="src" href="https://www.beehiiv.com/blog/the-state-of-newsletters-2026"> [5]</a>. Creator paid-subscription revenue hit $19M in 2025, ~+138% YoY<a class="src" href="https://www.beehiiv.com/blog/the-state-of-newsletters-2026"> [5]</a>.</p>
+  <p><strong>Beehiiv's own business</strong> (Sacra estimates): ~$30M annualized revenue as of Jun 2025, up from ~$13M ARR in Apr 2024<a class="src" href="https://sacra.com/c/beehiiv/"> [6]</a>. Funding: ~$50M total, incl. a $33M Series B (Apr 2024, led by NEA)<a class="src" href="https://www.cdpinstitute.org/news/beehiiv-raises-33-million-in-series-b-funding-for-the-newsletter-space/"> [7]</a>. No 2025/2026 round in public sources — <span class="unv">UNVERIFIED</span>.</p>
+
+  <h2>3 · Competitive landscape</h2>
+  <table>
+    <tr><th></th><th>Sub take-rate</th><th>Edge</th></tr>
+    <tr><td><strong>Beehiiv</strong></td><td>0%</td><td>Monetization economics + best-in-class growth tools</td></tr>
+    <tr><td>Substack</td><td>10%</td><td>Discovery network + reader app; $1.1B valuation<a class="src" href="https://sacra.com/c/substack/"> [10]</a></td></tr>
+    <tr><td>Kit (ConvertKit)</td><td>0% (SaaS)</td><td>CRM/automation depth; profitable, ~$44M ARR<a class="src" href="https://sacra.com/c/convertkit/"> [11]</a></td></tr>
+    <tr><td>Ghost</td><td>0% (OSS)</td><td>True ownership, self-hostable</td></tr>
+  </table>
+  <p><strong>Wins:</strong> economics (0% cut) and the growth toolkit — best for running a newsletter as a business. <strong>Loses:</strong> Substack owns discovery + cultural gravity; Kit wins on automation for sellers; Ghost wins on ownership.</p>
+
+  <h2>4 · How Beehiiv dies (the inversion)</h2>
+  <ul class="list" style="gap:12px">
+    <li><strong>Deliverability collapse on shared sending infrastructure</strong> — abuse by some senders dragged inbox placement for all; spam complaints surfaced in 2024<a class="src" href="https://campaignrefinery.com/beehiiv-spam"> [9]</a>. A newsletter platform's whole value is the email arriving. <em>(Current severity <span class="unv">UNVERIFIED</span>; structural risk real.)</em></li>
+    <li><strong>The 0% moat is a price, and prices get matched.</strong> The wedge is economic, not technical — a better-funded rival can neutralize it.</li>
+    <li><strong>Single-channel platform risk.</strong> AI-summarized inboxes / tighter sender rules compress every newsletter platform at once — and beehiiv is the most email-dependent of the majors.</li>
+  </ul>
+
+  <h2>5 · The one strategic gap</h2>
+  <p>Beehiiv monetizes <em>publishers</em> brilliantly but has <strong>no reader-side discovery network</strong> like Substack's app/Notes flywheel. A competitor pairing beehiiv-grade economics (0% cut) with a real reader-facing discovery surface would hit beehiiv exactly where it's thinnest — while Substack's 10% cut leaves its own economic flank open. The wedge: <em>"Substack's network, beehiiv's economics."</em></p>
+
+  <h2>Sources</h2>
+  <div class="srcs"><ol>
+    <li><a href="https://www.inc.com/ben-sherry/with-beehiiv-tyler-denk-is-riding-the-newsletter-wave/91022171">Inc. — Tyler Denk / founding</a></li>
+    <li><a href="https://www.beehiiv.com/about">beehiiv — About</a></li>
+    <li><a href="https://www.beehiiv.com/pricing">beehiiv — Pricing (plans, 0% take-rate)</a></li>
+    <li><a href="https://www.beehiiv.com/blog/the-state-of-newsletters-2026">beehiiv — State of Newsletters 2026 (self-reported)</a></li>
+    <li><a href="https://sacra.com/c/beehiiv/">Sacra — beehiiv revenue/valuation (estimates)</a></li>
+    <li><a href="https://www.cdpinstitute.org/news/beehiiv-raises-33-million-in-series-b-funding-for-the-newsletter-space/">CDP Institute — $33M Series B</a></li>
+    <li><a href="https://campaignrefinery.com/beehiiv-spam">Campaign Refinery — deliverability criticism (Oct 2024)</a></li>
+    <li><a href="https://sacra.com/c/substack/">Sacra — Substack ($1.1B, 10% cut)</a></li>
+    <li><a href="https://sacra.com/c/convertkit/">Sacra — Kit/ConvertKit (~$44M ARR)</a></li>
+  </ol>
+  <p style="font-size:11px">Numbering condensed for the sample; sources 3–11 in the full brief map to the same set.</p></div>
+
+  <div class="kbox" style="margin-top:18px"><strong>Verification notes.</strong> Platform-scale figures are beehiiv's own report (labeled, not laundered as neutral fact). Company revenue/valuation are Sacra estimates. Two "$19M" figures in circulation are <em>different metrics</em> (creator GMV vs beehiiv's own software revenue) and are kept separate. Deliverability criticism is from Oct 2024; current severity is unverified. No 2025/26 funding round appears in public sources.</div>
+
+  <p style="margin-top:26px"><a class="btn primary" href="index.html#free">Get one for your competitor →</a></p>
+</main>
+
+<footer><div class="wrap">Tearline · this is a real, fully-sourced sample produced pre-launch. Every claim is verifiable above.</div></footer>
+
+</body>
+</html>
