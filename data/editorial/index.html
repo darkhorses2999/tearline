@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Can a backtest lie to you? — Moonshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --paper-2:#efeae0;
+    --ink:#16140f;
+    --ink-soft:#43403a;
+    --ink-faint:#6c675d;
+    --rule:#d8d2c4;
+    --rule-soft:#e4dfd3;
+    --brand:#1f3a6b;
+    --brand-deep:#15294d;
+    --danger:#9a261d;
+    --pass:#1c5638;
+    --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px; --s6:64px; --s7:96px;
+    --maxw:640px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--s3);}
+  ::selection{background:var(--brand);color:var(--paper);}
+
+  .kicker{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--brand);font-weight:500;
+  }
+  .display{
+    font-family:"Fraunces",Georgia,serif;
+    font-weight:900;
+    font-size:clamp(2.7rem,12vw,4.6rem);
+    line-height:.96;
+    letter-spacing:-.015em;
+    margin:0 0 var(--s3);
+    color:var(--ink);
+  }
+  .display em{font-style:italic;font-weight:500;color:var(--brand);}
+  h2.section{
+    font-family:"Fraunces",Georgia,serif;
+    font-weight:600;
+    font-size:clamp(1.7rem,6.5vw,2.4rem);
+    line-height:1.05;letter-spacing:-.01em;margin:0;
+  }
+  .label{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:500;
+  }
+
+  header{padding:var(--s5) 0 var(--s4);}
+  .masthead-rule{
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1.5px solid var(--ink);
+    padding-bottom:var(--s1);margin-bottom:var(--s4);
+    gap:var(--s2);
+  }
+  .mast-name{font-family:"Fraunces",serif;font-weight:600;font-size:15px;letter-spacing:.02em;}
+  .mast-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-faint);letter-spacing:.08em;}
+  .hook-answer{
+    display:flex;gap:var(--s2);align-items:baseline;
+    border-left:3px solid var(--brand);
+    padding-left:var(--s2);margin-top:var(--s3);flex-wrap:wrap;
+  }
+  .hook-answer .big{
+    font-family:"Fraunces",serif;font-style:italic;font-weight:500;
+    font-size:clamp(1.5rem,6vw,2rem);line-height:1.1;color:var(--brand);
+  }
+  .hook-answer p{margin:0;font-size:1.02rem;color:var(--ink-soft);line-height:1.45;}
+  .inout{
+    margin-top:var(--s4);
+    display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
+    font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink);
+  }
+  .inout .chip{background:var(--paper-2);border:1px solid var(--rule);padding:6px 12px;border-radius:2px;font-weight:500;}
+  .inout .chip.out{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .inout svg{flex:none;color:var(--ink-faint);}
+
+  section{padding:var(--s6) 0;border-top:1px solid var(--rule);}
+  .sec-head{margin-bottom:var(--s4);}
+  .sec-head .kicker{display:block;margin-bottom:var(--s2);}
+  .sec-head p{margin:var(--s2) 0 0;color:var(--ink-soft);font-size:1.02rem;max-width:46ch;}
+
+  .step{
+    position:relative;
+    padding:var(--s3) 0 var(--s4) calc(var(--s5) + var(--s1));
+    border-top:1px solid var(--rule-soft);
+  }
+  .step:first-of-type{border-top:none;}
+  .step .num{
+    position:absolute;left:0;top:var(--s3);
+    font-family:"Fraunces",serif;font-weight:500;font-style:italic;
+    font-size:1.9rem;line-height:1;color:var(--brand);
+    width:var(--s5);text-align:left;
+  }
+  .step .verb{
+    font-family:"Fraunces",serif;font-weight:600;font-size:1.45rem;
+    line-height:1;letter-spacing:.01em;margin:0 0 6px;
+    display:flex;align-items:center;gap:var(--s2);
+  }
+  .step .verb svg{color:var(--brand);flex:none;}
+  .step .one{margin:0 0 var(--s2);font-size:1.04rem;color:var(--ink);font-weight:500;line-height:1.4;}
+  .step details{margin-top:var(--s2);}
+  .step summary{
+    list-style:none;cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--brand);
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 0;min-height:44px;
+  }
+  .step summary::-webkit-details-marker{display:none;}
+  .step summary .tw{transition:transform .2s ease;}
+  .step details[open] summary .tw{transform:rotate(90deg);}
+  .step .why{
+    font-size:.98rem;line-height:1.55;color:var(--ink-soft);
+    margin:0 0 var(--s2);border-left:2px solid var(--rule);padding-left:var(--s2);
+  }
+  .step .borrows{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-faint);letter-spacing:.02em;}
+  .step .borrows b{color:var(--ink-soft);font-weight:600;}
+  .step.grade{
+    background:var(--paper-2);margin:0 calc(-1 * var(--s3));
+    padding-left:calc(var(--s5) + var(--s1) + var(--s3));padding-right:var(--s3);
+    border-radius:2px;border-top:1px solid var(--rule);
+  }
+  .step.grade .num{left:var(--s3);}
+  .step.grade .verb svg{color:var(--pass);}
+  .floor-tag{
+    display:inline-block;margin-top:var(--s1);
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--pass);font-weight:600;
+  }
+
+  .rule-sec{background:var(--ink);color:var(--paper);border-top:none;}
+  .rule-sec .kicker{color:#a9bce0;}
+  .rule-sec h2.section{color:var(--paper);}
+  .rule-statement{
+    font-family:"Fraunces",serif;font-weight:500;font-style:italic;
+    font-size:clamp(1.6rem,7vw,2.3rem);line-height:1.18;
+    margin:0 0 var(--s2);color:var(--paper);
+  }
+  .rule-gloss{color:#cfcabf;font-size:1.02rem;line-height:1.5;margin:0 0 var(--s5);max-width:48ch;}
+  .rule-gloss b{color:var(--paper);font-weight:600;}
+
+  .week{margin-bottom:var(--s5);}
+  .week-cap{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:#97938b;margin-bottom:var(--s2);
+  }
+  .days{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+  .day{
+    position:relative;
+    border:1px solid #34322b;border-radius:2px;
+    padding:var(--s2) 4px var(--s1);
+    text-align:center;min-height:84px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    background:#1d1b16;
+  }
+  .day .d-name{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#b0aca3;letter-spacing:.06em;}
+  .day .d-state{font-size:10px;line-height:1.15;color:#8a867e;font-family:"IBM Plex Mono",monospace;letter-spacing:.04em;}
+  .day.usable{background:#21304d;border-color:#3a5party;border-color:#3a548a;}
+  .day.usable .d-name{color:#d3ddec;}
+  .day.usable .d-state{color:#a6b8d8;}
+  .day.decide{background:var(--brand);border-color:#4c6aa0;}
+  .day.decide .d-name{color:#fff;font-weight:600;}
+  .day.decide .d-state{color:#d3ddec;}
+  .day.future{
+    background:repeating-linear-gradient(135deg,#1d1b16 0,#1d1b16 5px,#262420 5px,#262420 10px);
+    border-color:#34322b;
+  }
+  .day.future .d-name{color:#79766e;}
+  .day.future .d-state{color:#79766e;}
+  .day .marker{
+    position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+    font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;
+    background:var(--brand);color:#fff;padding:2px 6px;border-radius:2px;white-space:nowrap;
+  }
+  .wall-note{
+    display:flex;align-items:center;gap:var(--s1);margin-top:var(--s2);
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#97938b;
+  }
+  .wall-note svg{color:#97938b;flex:none;}
+
+  .versus{display:grid;grid-template-columns:1fr;gap:var(--s2);}
+  .card{border-radius:2px;padding:var(--s3);border:1px solid;}
+  .card.leaky{background:rgba(154,38,29,.16);border-color:#7a2c24;}
+  .card.ours{background:rgba(28,86,56,.18);border-color:#326247;}
+  .card .c-tag{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:600;margin-bottom:var(--s1);
+    display:flex;align-items:center;gap:6px;
+  }
+  .card.leaky .c-tag{color:#ec8a80;}
+  .card.ours .c-tag{color:#8acda6;}
+  .card .c-tag svg{flex:none;}
+  .card h3{
+    font-family:"Fraunces",serif;font-weight:600;font-size:1.15rem;
+    margin:0 0 var(--s1);color:var(--paper);line-height:1.15;
+  }
+  .card .chain{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.7;color:#cfcabf;margin:0;}
+  .card .chain .arrow{color:#97938b;}
+  .card.leaky .chain .end{color:#ec8a80;font-weight:600;}
+  .card.ours .chain .end{color:#8acda6;font-weight:600;}
+
+  .bars{margin:var(--s4) 0 var(--s3);}
+  .bar-row{margin-bottom:var(--s3);}
+  .bar-row .bl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .bar-row .bl .name{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);}
+  .bar-row .bl .pct{font-family:"Fraunces",serif;font-weight:600;font-size:1.3rem;line-height:1;}
+  .track{height:14px;background:var(--paper-2);border:1px solid var(--rule);border-radius:2px;overflow:hidden;}
+  .fill{height:100%;}
+  .fill.design{width:95%;background:var(--brand);}
+  .fill.engine{width:5%;background:var(--danger);}
+  .gap-callout{
+    font-family:"Fraunces",serif;font-style:italic;font-weight:500;
+    font-size:1.05rem;color:var(--ink-soft);line-height:1.5;
+    border-top:1px solid var(--rule);padding-top:var(--s3);margin-top:var(--s3);
+  }
+  .gap-callout b{font-style:normal;color:var(--ink);}
+
+  .verdict{
+    margin-top:var(--s4);display:flex;align-items:flex-start;gap:var(--s2);
+    background:var(--ink);color:var(--paper);padding:var(--s3);border-radius:2px;
+  }
+  .verdict .vbadge{
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px;
+    letter-spacing:.1em;background:var(--danger);color:#fff;
+    padding:6px 10px;border-radius:2px;flex:none;
+  }
+  .verdict p{margin:0;font-size:1rem;line-height:1.5;color:#e9e5dc;}
+  .verdict p b{color:#fff;}
+
+  .next{margin-top:var(--s4);border:1.5px solid var(--ink);border-radius:2px;padding:var(--s3);background:var(--paper);}
+  .next .label{display:flex;align-items:center;gap:6px;margin-bottom:var(--s1);}
+  .next .label svg{color:var(--brand);}
+  .next .move{font-family:"Fraunces",serif;font-weight:500;font-size:1.2rem;line-height:1.35;margin:0;color:var(--ink);}
+  .next .move b{font-weight:600;}
+  .next .tags{margin-top:var(--s2);display:flex;gap:var(--s1);flex-wrap:wrap;}
+  .next .tags span{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--brand);border:1px solid var(--brand);
+    padding:4px 8px;border-radius:2px;
+  }
+
+  footer{border-top:1.5px solid var(--ink);padding:var(--s5) 0 var(--s6);}
+  footer .mark{font-family:"Fraunces",serif;font-weight:600;font-size:1.15rem;margin:0 0 var(--s2);}
+  footer .mark em{font-style:italic;font-weight:500;color:var(--brand);}
+  footer p{margin:var(--s1) 0 0;font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.7;color:var(--ink-faint);letter-spacing:.02em;}
+
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:2px;}
+  .rule-sec summary:focus-visible{outline-color:#a9bce0;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+
+  @media (min-width:560px){.versus{grid-template-columns:1fr 1fr;}}
+  @media (max-width:360px){
+    body{font-size:16px;}
+    .wrap{padding:0 var(--s2);}
+    .days{gap:4px;}
+    .day{padding:var(--s2) 2px var(--s1);}
+    .day .d-state{font-size:9px;}
+    .step.grade{padding-left:calc(var(--s5) + var(--s2));}
+    .inout{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="masthead-rule">
+      <span class="mast-name">Moonshot</span>
+      <span class="mast-meta">THE MARKET-DATA ENGINE</span>
+    </div>
+
+    <span class="kicker" style="display:block;margin-bottom:16px;">A field guide to honest backtesting</span>
+    <h1 class="display">Can a backtest <em>lie</em> to you?</h1>
+
+    <div class="hook-answer">
+      <span class="big">Yes — and&nbsp;most do.</span>
+      <p>We built the machine so ours can't.</p>
+    </div>
+
+    <div class="inout" aria-label="Free market data goes in, an honest verdict comes out">
+      <span class="chip">free market data</span>
+      <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M0 7h18m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="chip">the machine</span>
+      <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M0 7h18m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="chip out">an honest verdict</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="machine-h">
+    <div class="sec-head">
+      <span class="kicker">The machine · 5 steps</span>
+      <h2 class="section" id="machine-h">From a free price feed to a verdict you can trust</h2>
+      <p>Each step does one job — and borrows a proven idea from the public quant world instead of reinventing it. Tap <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--brand)">why it matters</span> to go deeper.</p>
+    </div>
+
+    <article class="step">
+      <span class="num">01</span>
+      <h3 class="verb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7c0-1.7 4-3 9-3s9 1.3 9 3-4 3-9 3-9-1.3-9-3Z" stroke="currentColor" stroke-width="1.6"/><path d="M3 7v5c0 1.7 4 3 9 3s9-1.3 9-3V7M3 12v5c0 1.7 4 3 9 3s9-1.3 9-3v-5" stroke="currentColor" stroke-width="1.6"/></svg>
+        Gather
+      </h3>
+      <p class="one">Pull free daily prices from Yahoo Finance and Binance.</p>
+      <details>
+        <summary><svg class="tw" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="m3 1 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Why it matters</summary>
+        <p class="why">One adapter per source, all behind a single shape. If one free feed dies, the loop fails over to another instead of breaking.</p>
+        <p class="borrows">Borrows <b>OpenBB</b> · <b>ccxt</b></p>
+      </details>
+    </article>
+
+    <article class="step">
+      <span class="num">02</span>
+      <h3 class="verb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor"/></svg>
+        Lock
+      </h3>
+      <p class="one">Freeze each day's data so it can never be quietly changed later.</p>
+      <details>
+        <summary><svg class="tw" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="m3 1 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Why it matters</summary>
+        <p class="why">Exchanges silently restate old prices. If we re-pulled and overwrote, yesterday's "fact" could change under us and a backtest would cheat unnoticed. So every pull is saved once, stamped, and never edited.</p>
+        <p class="borrows">Borrows <b>zipline bundles</b></p>
+      </details>
+    </article>
+
+    <article class="step">
+      <span class="num">03</span>
+      <h3 class="verb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14M9.5 7V5.5a1.5 1.5 0 0 1 1.5-1.5h2a1.5 1.5 0 0 1 1.5 1.5V7M7 7l1 12.5A1.5 1.5 0 0 0 9.5 21h5a1.5 1.5 0 0 0 1.5-1.5L17 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Clean
+      </h3>
+      <p class="one">Throw out broken rows loudly — not silently.</p>
+      <details>
+        <summary><svg class="tw" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="m3 1 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Why it matters</summary>
+        <p class="why">Negative prices, gaps, impossible highs — caught the moment data arrives, and the run stops. Better a loud halt than a poisoned result you'd go on to trust.</p>
+        <p class="borrows">Borrows <b>Pandera checks</b></p>
+      </details>
+    </article>
+
+    <article class="step">
+      <span class="num">04</span>
+      <h3 class="verb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.5 5.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 4v5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Replay
+      </h3>
+      <p class="one">Walk through history one day at a time, blind to tomorrow, and trade.</p>
+      <details>
+        <summary><svg class="tw" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="m3 1 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Why it matters</summary>
+        <p class="why">The same code runs the backtest, the paper-trade, and one day the real account. Costs <em>and</em> taxes come out of every trade. This is where the one rule lives.</p>
+        <p class="borrows">Borrows <b>Lean</b> · <b>Nautilus</b></p>
+      </details>
+    </article>
+
+    <article class="step grade">
+      <span class="num">05</span>
+      <h3 class="verb">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M5 6l7-3 7 3M5 6 2.5 12a3.5 3.5 0 0 0 7 0L5 6Zm14 0-2.5 6a3.5 3.5 0 0 0 7 0L19 6Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Grade
+      </h3>
+      <p class="one">The live market scores it. Our own backtest gets no vote.</p>
+      <p class="why" style="border-color:var(--pass)">Only money moving forward, through a real unseen future, counts as a pass. Everything before this is a rehearsal.</p>
+      <span class="floor-tag">The honest floor</span>
+    </article>
+  </section>
+</div>
+
+<section class="rule-sec" aria-labelledby="rule-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">The one rule · the whole trick</span>
+      <h2 class="section" id="rule-h">No peeking at the future</h2>
+    </div>
+
+    <p class="rule-statement">Every decision can use only the days that already happened.</p>
+    <p class="rule-gloss">Tomorrow isn't <b>off-limits</b> — it physically <b>isn't there to read</b>. Picture one week. The decision is made on <b>Thursday</b>, so Monday through Thursday are fair game. Friday and Saturday haven't happened yet.</p>
+
+    <div class="week">
+      <div class="week-cap">One week · decision made Thursday</div>
+      <div class="days" role="img" aria-label="Mon to Wed are usable past, Thursday is the decision day, and Fri and Sat are an unreadable hatched future.">
+        <div class="day usable"><span class="d-name">Mon</span><span class="d-state">usable</span></div>
+        <div class="day usable"><span class="d-name">Tue</span><span class="d-state">usable</span></div>
+        <div class="day usable"><span class="d-name">Wed</span><span class="d-state">usable</span></div>
+        <div class="day decide"><span class="marker">DECIDE</span><span class="d-name">Thu</span><span class="d-state">now</span></div>
+        <div class="day future"><span class="d-name">Fri</span><span class="d-state">unread</span></div>
+        <div class="day future"><span class="d-name">Sat</span><span class="d-state">unread</span></div>
+      </div>
+      <div class="wall-note">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 11 11 3M3 3l8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Hatched = data that does not exist yet at decision time.
+      </div>
+    </div>
+
+    <div class="versus">
+      <div class="card leaky">
+        <div class="c-tag">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v3.5M7 9.6v.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          A leaky backtest
+        </div>
+        <h3>Peeks at Friday</h3>
+        <p class="chain">sees the future <span class="arrow">→</span> looks like genius <span class="arrow">→</span> <span class="end">loses real money the instant it goes live</span></p>
+      </div>
+      <div class="card ours">
+        <div class="c-tag">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ours
+        </div>
+        <h3>Blind to Friday</h3>
+        <p class="chain">sees only the past <span class="arrow">→</span> looks modest <span class="arrow">→</span> <span class="end">but if it wins, the win is real</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <section aria-labelledby="status-h">
+    <div class="sec-head">
+      <span class="kicker">Honest status · where we actually are</span>
+      <h2 class="section" id="status-h">A plan you can't run is a picture of the thing, not the thing.</h2>
+    </div>
+
+    <div class="bars">
+      <div class="bar-row">
+        <div class="bl"><span class="name">The design — thought through</span><span class="pct" style="color:var(--brand)">95%</span></div>
+        <div class="track"><div class="fill design"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bl"><span class="name">The engine — actually built</span><span class="pct" style="color:var(--danger)">5%</span></div>
+        <div class="track"><div class="fill engine"></div></div>
+      </div>
+    </div>
+
+    <p class="gap-callout">Today the repo is <b>one 46-line script</b>. The blueprint above is real thinking — but reality grades engines, not blueprints.</p>
+
+    <div class="verdict">
+      <span class="vbadge">FIX-FIRST</span>
+      <p><b>Build the machine before admiring it.</b> The honest gap between the design and the running code is the only number that matters right now.</p>
+    </div>
+
+    <div class="next">
+      <div class="label">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        The one next move
+      </div>
+      <p class="move">Ship <b>one real brick</b>: a test that proves "no peeking" holds, plus one symbol's data cleaned and locked.</p>
+      <div class="tags"><span>Small</span><span>Runnable</span><span>Real</span></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p class="mark">Moonshot — <em>designed to teach, not impress.</em></p>
+    <p>Benchmarked against 29 public quant repos. · This becomes real only when one strategy earns a positive, after-tax grade from the market itself — not from us.</p>
+  </div>
+</footer>
+
+</body>
+</html>
