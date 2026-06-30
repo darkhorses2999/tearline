@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Autonomous Loop — Moonshot</title>
+<style>
+  :root{
+    --bg:#0a0f1a; --panel:#111a2b; --panel2:#0e1626; --line:#23304a;
+    --ink:#eaf1fb; --mut:#92a3be; --green:#34d399; --amber:#fbbf24; --blue:#60a5fa; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:30px 18px 60px}
+  header{border-left:4px solid var(--green);padding-left:16px;margin-bottom:10px}
+  .kick{color:var(--green);font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+  h1{font-size:30px;line-height:1.12;margin:6px 0 10px;letter-spacing:-.02em}
+  .model{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:18px 0 26px;font-size:16px}
+  .model b{color:var(--green)}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:30px 0 14px;font-weight:700}
+  /* loop */
+  .loop{position:relative}
+  .step{display:flex;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;position:relative}
+  .num{flex:0 0 auto;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#06210f}
+  .s1 .num{background:var(--green)} .s2 .num{background:var(--blue);color:#06203f} .s3 .num{background:var(--amber);color:#3a2a00} .s4 .num{background:var(--violet);color:#1a0f3a}
+  .step h3{margin:0 0 3px;font-size:16px}
+  .step p{margin:0;color:var(--mut);font-size:13.5px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin-top:7px}
+  .free{background:rgba(52,211,153,.13);color:var(--green);border:1px solid rgba(52,211,153,.4)}
+  .cost{background:rgba(251,191,36,.13);color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+  .arrow{display:flex;justify-content:center;color:var(--line);font-size:20px;margin:4px 0;height:18px}
+  .arrow span{color:var(--mut);font-size:11px;border:1px dashed var(--line);border-radius:20px;padding:1px 10px}
+  .reloop{margin-top:8px;text-align:center;color:var(--green);font-size:12.5px;border:1px dashed rgba(52,211,153,.4);border-radius:20px;padding:6px 12px;display:inline-block}
+  .reloopwrap{text-align:center}
+  /* cost bar */
+  .bar{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--line);font-size:12px;font-weight:700}
+  .bar .g{background:rgba(52,211,153,.85);color:#06210f;flex:0 0 92%;display:flex;align-items:center;padding-left:12px}
+  .bar .a{background:rgba(251,191,36,.9);color:#3a2a00;flex:1;display:flex;align-items:center;justify-content:center}
+  .small{color:var(--mut);font-size:12.5px;margin-top:8px}
+  /* strategy mini-loop */
+  .strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px;font-weight:600}
+  .chip.k{color:var(--green)}
+  .sep{color:var(--mut)}
+  /* split table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+  td:first-child{color:var(--green)} td:last-child{color:var(--blue)}
+  tr:last-child td{border-bottom:none}
+  footer{color:var(--mut);font-size:12px;border-top:1px dashed var(--line);margin-top:28px;padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kick">Moonshot · how it runs</div>
+    <h1>The Autonomous Loop</h1>
+  </header>
+
+  <div class="model">🧠 The whole trick in one line: <b>a tireless free "intern" grinds all night — and only wakes the expensive "expert" when there's a real decision.</b> Keep the intern busy, ration the expert → you can run it for <b>decades</b> without going broke.</div>
+
+  <h2>The cycle</h2>
+
+  <div class="reloopwrap" style="margin-bottom:8px">
+    <span class="chip" style="border-color:var(--blue);color:var(--blue)">⏰ SCHEDULER (your runtime) — wakes the loop every 30–60 min · hard $-cap · kill-switch</span>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="loop">
+    <div class="step s1">
+      <div class="num">1</div>
+      <div><h3>Grind</h3><p>Pull market data · re-run the strategy tests · check the live paper-trade · log results to a state file.</p><span class="tag free">cheap code · $0 tokens · runs unattended</span></div>
+    </div>
+    <div class="arrow"><span>result logged</span></div>
+
+    <div class="step s2">
+      <div class="num">2</div>
+      <div><h3>Milestone?</h3><p>Is there something <em>real</em> — a result that changes the engine, a wall, a decision? If not → 💤 sleep, spend nothing.</p><span class="tag free">a gate · $0 to say "not yet"</span></div>
+    </div>
+    <div class="arrow"><span>yes — something real</span></div>
+
+    <div class="step s3">
+      <div class="num">3</div>
+      <div><h3>Wake the Avengers</h3><p>The council judges the result · wires the wall into <em>data</em> · decides the next, better engine version.</p><span class="tag cost">the LLM · rationed · the ONLY cost</span></div>
+    </div>
+    <div class="arrow"><span>new plan</span></div>
+
+    <div class="step s4">
+      <div class="num">4</div>
+      <div><h3>Persist</h3><p>Save the engine version + track record to <code>loop-state.json</code> + memory — so a restart <em>resumes</em>, never starts from zero.</p><span class="tag free">disk · $0</span></div>
+    </div>
+  </div>
+
+  <div class="arrow" style="margin-top:10px">↺</div>
+  <div class="reloopwrap"><span class="reloop">↺ back to the scheduler — repeat, for years</span></div>
+
+  <h2>Why it stays cheap</h2>
+  <div class="bar"><div class="g">~99% · GRIND (free code)</div><div class="a">~1% · think</div></div>
+  <p class="small">Almost all the loop's life is free deterministic code on free data. The only tokens spent are the rare "wake" — rationed, and hard-capped by your runtime switch so it <b>can't</b> outrun the budget.</p>
+
+  <h2>What each cycle is really for</h2>
+  <div class="strip">
+    <span class="chip">🧱 a wall</span><span class="sep">→</span>
+    <span class="chip k">data</span><span class="sep">→</span>
+    <span class="chip">wire it forward</span><span class="sep">→</span>
+    <span class="chip">a better engine</span><span class="sep">→</span>
+    <span class="chip">forward-test</span><span class="sep">→</span>
+    <span class="chip k">compound</span>
+  </div>
+  <p class="small">That's the magic-penny loop: every cycle turns a wall into a sharper engine, and lets capital + discipline compound — for decades. Survival is the edge.</p>
+
+  <h2>Who builds which half</h2>
+  <table>
+    <tr><th>🧠 The agent (done — my lane)</th><th>⏰ The runtime (you — R0)</th></tr>
+    <tr><td>the grind scripts</td><td>keep-alive + auto-restart</td></tr>
+    <tr><td>milestone logic</td><td>the scheduler heartbeat</td></tr>
+    <tr><td>the Avengers' judgment</td><td>persist state for resume</td></tr>
+    <tr><td>the <code>autonomous-loop</code> skill</td><td><b>the hard budget cap + kill-switch</b></td></tr>
+  </table>
+
+  <footer>Moonshot · the agent brings the brain (frugal pattern, free grind, council judgment); the runtime brings the endurance (staying alive + a hard spend cap). Wire both → it compounds while you sleep, cheaply.</footer>
+
+</div>
+</body>
+</html>
