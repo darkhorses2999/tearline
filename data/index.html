@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data System Design — Moonshot</title>
+<style>
+  :root{
+    --bg:#0a0f1a; --panel:#111a2b; --panel2:#0e1626; --line:#23304a;
+    --ink:#eaf1fb; --mut:#92a3be; --green:#34d399; --amber:#fbbf24; --blue:#60a5fa; --violet:#a78bfa; --red:#f87171;
+  }
+  @media (prefers-reduced-motion: no-preference){ .fade{animation:f .5s ease both} @keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:780px;margin:0 auto;padding:30px 18px 60px}
+  header{border-left:4px solid var(--blue);padding-left:16px;margin-bottom:10px}
+  .kick{color:var(--blue);font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+  h1{font-size:30px;line-height:1.12;margin:6px 0 12px;letter-spacing:-.02em}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;border-radius:20px;padding:5px 13px;border:1px solid rgba(251,191,36,.45);background:rgba(251,191,36,.12);color:var(--amber)}
+  .model{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0 8px;font-size:15.5px}
+  .model b{color:var(--blue)}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:34px 0 14px;font-weight:700}
+  /* pipeline */
+  .pipe{display:flex;flex-direction:column;gap:0}
+  .pstep{display:flex;gap:13px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .pdot{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#06210f;background:var(--green)}
+  .pstep.b .pdot{background:var(--blue);color:#06203f} .pstep.v .pdot{background:var(--violet);color:#1a0f3a} .pstep.a .pdot{background:var(--amber);color:#3a2a00}
+  .pstep h3{margin:0 0 2px;font-size:15px} .pstep p{margin:0;color:var(--mut);font-size:13px}
+  .down{display:flex;justify-content:flex-start;margin-left:28px;color:var(--line);font-size:15px;height:14px;align-items:center}
+  /* component grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px}
+  .card .n{font-size:11px;font-weight:800;color:var(--blue)}
+  .card h4{margin:3px 0 4px;font-size:14px}
+  .card p{margin:0;color:var(--mut);font-size:12.5px}
+  .card .from{display:inline-block;margin-top:7px;font-size:11px;font-weight:700;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:1px 7px}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+  td:first-child{color:var(--ink);font-weight:600} td:last-child{color:var(--green)}
+  tr:last-child td{border-bottom:none}
+  /* verdict / honest */
+  .audit{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.32);border-radius:12px;padding:16px 18px}
+  .audit h3{margin:0 0 8px;font-size:16px;color:var(--red)}
+  .audit p{margin:0 0 10px;font-size:13.5px;color:var(--ink)}
+  .audit b{color:var(--amber)}
+  .hole{font-size:13px;color:var(--mut);padding-left:18px;margin:5px 0}
+  /* slice */
+  .slice{display:flex;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px}
+  .slice .k{flex:0 0 auto;width:26px;height:26px;border-radius:7px;background:var(--green);color:#06210f;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .slice div p{margin:0;font-size:13.5px} .slice div span{font-size:12px;color:var(--mut)}
+  .small{color:var(--mut);font-size:12.5px;margin-top:10px}
+  footer{color:var(--mut);font-size:12px;border-top:1px dashed var(--line);margin-top:34px;padding-top:14px}
+  code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px;color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap fade">
+
+  <header>
+    <div class="kick">Moonshot · system design</div>
+    <h1>Data Gathering &amp; Analysis Engine</h1>
+  </header>
+  <span class="badge">⚖︎ Audit verdict: FIX-FIRST · benchmarked vs 29 repos</span>
+
+  <div class="model">🧱 One line: <b>a single-machine, file-first research lakehouse + replay engine</b> for one frugal operator. Free data in → snapshot it so it can never lie → replay it through one honest engine → let the live market grade it. No servers. No cluster. Wakes the expensive brain only at milestones.</div>
+
+  <h2>The pipeline — 5 jobs</h2>
+  <div class="pipe">
+    <div class="pstep"><div class="pdot">1</div><div><h3>Ingest (free-first)</h3><p>yfinance · ccxt · Binance · public REST — one normalized schema, failover if a source dies.</p></div></div>
+    <div class="down">↓</div>
+    <div class="pstep b"><div class="pdot">2</div><div><h3>Snapshot — immutable</h3><p>Append-only, content-hashed, as-of-stamped Parquet. <b style="color:var(--blue)">Never overwrite</b> → restatements can't inject look-ahead.</p></div></div>
+    <div class="down">↓</div>
+    <div class="pstep b"><div class="pdot">3</div><div><h3>Clean → PIT features</h3><p>Fail-loud quality gates; every row carries when it was knowable. Signals = versioned text, not hidden code.</p></div></div>
+    <div class="down">↓</div>
+    <div class="pstep v"><div class="pdot">4</div><div><h3>Analyze — two tiers</h3><p>Fast vectorized sweep to discover → one honest event-driven replay (next-bar fills, cost <b style="color:var(--violet)">+ tax</b>) to grade.</p></div></div>
+    <div class="down">↓</div>
+    <div class="pstep a"><div class="pdot">5</div><div><h3>Forward paper-trade = the real grader</h3><p>Same code path as the backtest. The market grades us, not our own curve. Monitor → loop → resume from disk.</p></div></div>
+  </div>
+
+  <h2>The one rule everything rests on</h2>
+  <div class="model" style="border-color:rgba(52,211,153,.4)">🔒 <b style="color:var(--green)">No future leak — structural, not disciplinary.</b> An as-of clock + as-of-stamped storage mean a decision at time T <b style="color:var(--green)">physically cannot read</b> a row stamped after T. Backed by a test that injects a future bar and asserts the engine can't see it. This is the #1 silent killer of backtests — we block it by construction.</div>
+
+  <h2>12 components — each steals from the best</h2>
+  <div class="grid">
+    <div class="card"><div class="n">01</div><h4>Ingestion adapters</h4><p>One schema per data type; free-source failover.</p><span class="from">OpenBB · ccxt</span></div>
+    <div class="card"><div class="n">02</div><h4>Bronze — immutable raw</h4><p>Content-hashed, never overwritten.</p><span class="from">zipline bundles</span></div>
+    <div class="card"><div class="n">03</div><h4>Silver — clean/validate</h4><p>Fail-loud quality gates.</p><span class="from">Pandera</span></div>
+    <div class="card"><div class="n">04</div><h4>Gold — PIT features</h4><p>As-of-correct factors as text.</p><span class="from">Qlib Alpha158</span></div>
+    <div class="card"><div class="n">05</div><h4>As-of clock + replay</h4><p>The ONE code path: backtest = paper = live.</p><span class="from">Lean · Nautilus</span></div>
+    <div class="card"><div class="n">06</div><h4>Two-tier backtester</h4><p>Cheap discovery → honest grade.</p><span class="from">vectorbt</span></div>
+    <div class="card"><div class="n">07</div><h4>Cost + tax broker</h4><p>Net-of-everything, incl. taxes.</p><span class="from">backtrader</span></div>
+    <div class="card"><div class="n">08</div><h4>Honest validation</h4><p>Walk-forward + Deflated Sharpe.</p><span class="from">Freqtrade</span></div>
+    <div class="card"><div class="n">09</div><h4>Bias self-checks</h4><p>Look-ahead probe each cycle.</p><span class="from">Freqtrade</span></div>
+    <div class="card"><div class="n">10</div><h4>Run-ledger</h4><p>data-hash + SHA + config + seed.</p><span class="from">qrun · MLflow</span></div>
+    <div class="card"><div class="n">11</div><h4>Lightweight orchestrator</h4><p>cron + scripts, resumable.</p><span class="from">Dagster idea</span></div>
+    <div class="card"><div class="n">12</div><h4>Monitor + trigger</h4><p>Alerts → Discord; founder is R0.</p><span class="from">track.py</span></div>
+  </div>
+
+  <h2>The quality floor — must-meet vs the repos</h2>
+  <table>
+    <tr><th>Must-meet</th><th>Floor repo</th><th>We do</th></tr>
+    <tr><td>Point-in-time correctness</td><td>Qlib · Lean</td><td>as-of storage + clock</td></tr>
+    <tr><td>Survivorship control</td><td>Lean</td><td>keep dead symbols</td></tr>
+    <tr><td>backtest = paper = live</td><td>Lean · Nautilus</td><td>ONE replay path</td></tr>
+    <tr><td>Realistic costs</td><td>Nautilus</td><td>fill-seam cost layer</td></tr>
+    <tr><td>Taxes (stricter!)</td><td>most omit</td><td>tax-lot processor</td></tr>
+    <tr><td>Overfit discipline</td><td>Freqtrade</td><td>Deflated Sharpe / PBO</td></tr>
+    <tr><td>Reproducibility</td><td>Qlib qrun</td><td>hash + SHA + seed</td></tr>
+  </table>
+  <p class="small">On paper, the design meets or exceeds the open-source floor on <b style="color:var(--green)">every</b> must-meet — and adds taxes, which most repos skip.</p>
+
+  <h2>The honest audit — what's NOT real yet</h2>
+  <div class="audit">
+    <h3>World-class design instinct. Vaporware engine.</h3>
+    <p>The repo today is <b>one 46-line script + this prose.</b> No DuckDB, no Parquet, no replay engine. The design warns against "a polished plan mistaken for the thing itself" — and right now <b>it is that thing.</b></p>
+    <p style="margin-bottom:4px">Two honesty holes we fix, not hide:</p>
+    <div class="hole">• No free source gives delisted history / point-in-time fundamentals → <b>crypto-only for now</b> (BTC/ETH survivorship ≈ moot). Equities are OUT until a real source exists.</div>
+    <div class="hole">• Over-built for today: CPCV, two-tier engine, wash-sale tax — machinery for strategies that <b>don't exist yet.</b></div>
+  </div>
+
+  <h2>So we ship the smallest real slice — not more design</h2>
+  <div class="slice"><div class="k">1</div><div><p>Future-bar look-ahead test against the seed</p><span>proves the one rule is real, today</span></div></div>
+  <div class="slice"><div class="k">2</div><div><p>OHLCV pull + 5 fail-loud invariants on one symbol</p><span>the clean layer, in miniature</span></div></div>
+  <div class="slice"><div class="k">3</div><div><p>Immutable snapshot → one Parquet dir + a manifest row</p><span>the store, in miniature</span></div></div>
+  <p class="small">Three files, reproducible, real — <b style="color:var(--green)">the medallion in miniature</b>, earning the rest by proving the pattern works. The map is excellent; now we build one real brick of the territory.</p>
+
+  <footer>Moonshot · designed by the council (Weaver · data-systems-architect/Kleppmann lens · harry-markopolos audit) · benchmarked against 29 public quant repos. The apparatus is sound — it becomes <em>real</em> only when one strategy earns a positive net-of-cost-and-tax grade from the market itself.</footer>
+
+</div>
+</body>
+</html>
