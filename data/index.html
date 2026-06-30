@@ -4,159 +4,170 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How the data engine works — Moonshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b0f17; --panel:#121826; --line:#232c3e; --ink:#eef2f8; --mut:#8b97ab;
-    --safe:#46d39a; --danger:#f06b6b; --hair:#2c3850;
+    --bg:#0d0e11; --bg2:#131419; --ink:#ece7df; --ink2:#b7b2a8; --mut:#7d7a73;
+    --hair:#262731; --hair2:#33343f;
+    --gold:#c8a35e; --safe:#5bb892; --leak:#d27059;
+    --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.6;-webkit-font-smoothing:antialiased;font-size:16px}
-  .wrap{max-width:680px;margin:0 auto;padding:34px 20px 64px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;font-size:16px;
+    background-image:radial-gradient(120% 60% at 50% -10%, #15161d 0%, var(--bg) 60%);}
+  .wrap{max-width:640px;margin:0 auto;padding:48px 22px 72px}
 
-  .kick{color:var(--mut);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
-  h1{font-size:30px;line-height:1.15;margin:10px 0 14px;letter-spacing:-.02em;max-width:18ch}
-  .lede{font-size:17px;color:var(--ink);margin:0 0 6px;max-width:60ch}
-  .lede b{color:var(--safe)}
-  .sub{color:var(--mut);font-size:14.5px;margin:0;max-width:62ch}
+  .kick{font-family:var(--mono);color:var(--gold);font-size:12px;letter-spacing:.24em;text-transform:uppercase;font-weight:500}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(34px,9vw,52px);line-height:1.04;
+    letter-spacing:-.02em;margin:18px 0 20px;max-width:15ch}
+  h1 em{font-style:italic;font-weight:500;color:var(--gold)}
+  .lede{font-size:clamp(17px,4.5vw,20px);line-height:1.5;color:var(--ink);margin:0 0 8px;max-width:30ch}
+  .lede b{color:var(--safe);font-weight:600}
+  .sub{color:var(--ink2);font-size:15px;margin:0;max-width:52ch}
 
-  h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
-    margin:42px 0 16px;font-weight:700;border-top:1px solid var(--line);padding-top:18px}
+  .label{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);
+    display:flex;align-items:center;gap:14px;margin:56px 0 22px}
+  .label::after{content:"";flex:1;height:1px;background:var(--hair)}
 
-  /* the flow — the hero. plain verbs, tap to learn more */
-  .flow{display:flex;flex-direction:column;gap:0}
-  .stage{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
-  .stage+.tick{height:18px;display:flex;justify-content:center;align-items:center;color:var(--hair)}
-  details>summary{list-style:none;cursor:pointer;display:flex;gap:14px;align-items:baseline;
-    padding:15px 16px;outline:none}
+  /* editorial flow */
+  .flow{border-top:1px solid var(--hair)}
+  .stage{border-bottom:1px solid var(--hair)}
+  details>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:18px;
+    align-items:baseline;padding:20px 4px;outline:none}
   details>summary::-webkit-details-marker{display:none}
-  summary:focus-visible{box-shadow:inset 0 0 0 2px var(--safe)}
-  .ix{flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);
-    color:var(--mut);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;align-self:center}
-  .verb{font-size:18px;font-weight:700;letter-spacing:-.01em}
-  .said{display:block;color:var(--mut);font-size:14px;font-weight:400;margin-top:2px}
-  .more{flex:0 0 auto;align-self:center;color:var(--mut);font-size:12px;border:1px solid var(--hair);
-    border-radius:20px;padding:2px 10px}
-  details[open] .more{color:var(--ink);border-color:var(--mut)}
-  .body{padding:0 16px 16px 56px;color:var(--mut);font-size:14px}
-  .body .steal{color:var(--safe);font-weight:600}
+  summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+  .no{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:500;padding-top:5px}
+  .verb{font-family:var(--serif);font-size:23px;font-weight:600;line-height:1.15;letter-spacing:-.01em}
+  .said{display:block;font-family:var(--sans);color:var(--ink2);font-size:14.5px;font-weight:400;margin-top:5px;line-height:1.45}
+  .chev{align-self:center;color:var(--mut);transition:transform .25s ease}
+  details[open] .chev{transform:rotate(90deg);color:var(--gold)}
+  .why{padding:0 4px 22px 44px;color:var(--ink2);font-size:14.5px;line-height:1.6;max-width:54ch}
+  .why .steal{display:block;margin-top:8px;font-family:var(--mono);font-size:12px;letter-spacing:.02em;color:var(--gold)}
 
-  /* the one rule — the teaching centre */
-  .rule{border:1px solid var(--hair);border-radius:14px;background:var(--panel);padding:20px 18px}
-  .rule h3{margin:0 0 4px;font-size:20px;letter-spacing:-.01em}
-  .rule p{margin:0 0 16px;color:var(--mut);font-size:14.5px;max-width:58ch}
-  .time{display:flex;gap:6px;align-items:stretch;margin:4px 0 8px}
-  .day{flex:1;text-align:center;font-size:12px;font-weight:700;padding:11px 0;border-radius:8px;
-    border:1px solid var(--hair);color:var(--ink)}
-  .day.now{border-color:var(--safe);color:var(--safe);box-shadow:0 0 0 1px var(--safe)}
-  .day.future{color:#56627a;border-style:dashed;background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(240,107,107,.07) 5px,rgba(240,107,107,.07) 10px)}
-  .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:14px}
-  .axis .can{color:var(--safe)} .axis .cant{color:var(--danger)}
-  .vs{display:grid;grid-template-columns:1fr;gap:8px}
-  .row{display:flex;gap:11px;align-items:flex-start;font-size:14px}
-  .mk{flex:0 0 auto;font-weight:800;width:18px}
-  .bad .mk{color:var(--danger)} .good .mk{color:var(--safe)}
-  .row b{color:var(--ink)}
+  /* the one rule — showpiece */
+  .rule{margin-top:8px;border:1px solid var(--hair2);border-radius:18px;
+    background:linear-gradient(180deg,#15161d,#101116);padding:30px 24px;
+    box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 24px 60px -40px #000}
+  .rule h3{font-family:var(--serif);font-weight:600;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;margin:0 0 10px;line-height:1.1}
+  .rule h3 em{font-style:italic;color:var(--gold)}
+  .rule p{color:var(--ink2);font-size:15px;line-height:1.55;margin:0 0 24px;max-width:46ch}
+  .time{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:10px}
+  .cell{font-family:var(--mono);font-size:11.5px;text-align:center;padding:13px 2px;border-radius:9px;
+    border:1px solid var(--hair2);color:var(--ink2);letter-spacing:.02em}
+  .cell.now{border-color:var(--gold);color:var(--gold);background:rgba(200,163,94,.08);font-weight:500}
+  .cell.fut{color:var(--leak);border-style:dashed;border-color:rgba(210,112,89,.45);
+    background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(210,112,89,.08) 6px 12px)}
+  .axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.04em;margin-bottom:26px}
+  .axis .a1{color:var(--gold)} .axis .a2{color:var(--leak)}
+  .cmp{display:flex;flex-direction:column;gap:14px}
+  .cmp .r{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:start;font-size:14.5px;line-height:1.5;color:var(--ink2)}
+  .cmp .r b{color:var(--ink);font-weight:600}
+  .ico{flex:0 0 auto;margin-top:2px}
+  .ico.x{color:var(--leak)} .ico.c{color:var(--safe)}
 
-  /* honest status — blueprint vs built */
-  .meter{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px}
-  .mrow{margin:0 0 14px}
-  .mrow:last-of-type{margin-bottom:0}
-  .mlabel{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
-  .mlabel b{font-weight:700} .mlabel span{color:var(--mut)}
-  .track{height:9px;border-radius:6px;background:#1b2233;overflow:hidden}
-  .fill{height:100%;border-radius:6px}
-  .verdict{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:14.5px}
-  .verdict b{color:var(--danger)}
+  /* honest meter */
+  .meter{display:flex;flex-direction:column;gap:22px}
+  .mrow .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .mrow .nm{font-family:var(--serif);font-size:19px;font-weight:600}
+  .mrow .pct{font-family:var(--mono);font-size:13px;color:var(--ink2)}
+  .track{height:7px;border-radius:5px;background:#1b1c23;overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .verdict{font-size:15px;line-height:1.6;color:var(--ink2);margin-top:30px;padding-top:24px;border-top:1px solid var(--hair)}
+  .verdict b{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--leak);font-weight:500}
 
-  .next{font-size:14.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);
-    border-left:3px solid var(--safe);border-radius:10px;padding:14px 16px;margin-top:14px}
-  .next b{color:var(--safe)}
+  .next{margin-top:26px;padding:22px 24px;border-radius:16px;background:var(--bg2);border:1px solid var(--hair);
+    border-left:2px solid var(--safe);font-size:15.5px;line-height:1.6;color:var(--ink)}
+  .next .h{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--safe);display:block;margin-bottom:8px}
 
-  footer{color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);margin-top:40px;padding-top:16px;max-width:62ch}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--hair);
+    font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--mut);letter-spacing:.02em;max-width:56ch}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="wrap">
 
   <div class="kick">Moonshot · how the data engine works</div>
-  <h1>Can a backtest lie to you?</h1>
+  <h1>Can a backtest <em>lie</em> to you?</h1>
   <p class="lede">Yes — and most do. We built the machine so <b>ours can't.</b></p>
-  <p class="sub">Here is the whole thing in one screen: free data goes in, an honest verdict comes out. Tap any step to go deeper.</p>
+  <p class="sub">Free market data goes in, an honest verdict comes out. The whole thing on one screen — tap any step to go deeper.</p>
 
-  <h2>The whole machine — five plain steps</h2>
+  <div class="label">The machine · five plain steps</div>
   <div class="flow">
 
     <div class="stage"><details>
-      <summary><span class="ix">1</span><span class="verb">Gather<span class="said">Pull free daily prices — Yahoo Finance, Binance.</span></span><span class="more">why</span></summary>
-      <div class="body">One adapter per source behind a single shape, so if one free feed dies the loop fails over instead of breaking. <span class="steal">Borrowed from OpenBB · ccxt.</span></div>
+      <summary><span class="no">01</span><span class="verb">Gather<span class="said">Pull free daily prices — Yahoo Finance, Binance.</span></span>
+        <svg class="chev" width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="why">One adapter per source behind a single shape, so if one free feed dies the loop fails over instead of breaking.<span class="steal">borrowed from OpenBB · ccxt</span></div>
     </details></div>
-    <div class="tick">↓</div>
 
     <div class="stage"><details>
-      <summary><span class="ix">2</span><span class="verb">Lock<span class="said">Freeze each day's data so it can never be quietly changed later.</span></span><span class="more">why</span></summary>
-      <div class="body">Exchanges silently restate old prices. If we re-pulled and overwrote, yesterday's "fact" could change under us — and a backtest would cheat without anyone noticing. So every pull is saved once, stamped, and never edited. <span class="steal">Borrowed from zipline bundles.</span></div>
+      <summary><span class="no">02</span><span class="verb">Lock<span class="said">Freeze each day's data so it can never be quietly changed later.</span></span>
+        <svg class="chev" width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="why">Exchanges silently restate old prices. If we re-pulled and overwrote, yesterday's "fact" could change under us — and a backtest would cheat without anyone noticing. So every pull is saved once, stamped, and never edited.<span class="steal">borrowed from zipline bundles</span></div>
     </details></div>
-    <div class="tick">↓</div>
 
     <div class="stage"><details>
-      <summary><span class="ix">3</span><span class="verb">Clean<span class="said">Throw out broken rows — loudly, not silently.</span></span><span class="more">why</span></summary>
-      <div class="body">Negative prices, gaps, impossible highs — caught the moment data arrives and the run stops, instead of poisoning a result you'd trust by mistake. <span class="steal">Borrowed from Pandera checks.</span></div>
+      <summary><span class="no">03</span><span class="verb">Clean<span class="said">Throw out broken rows — loudly, not silently.</span></span>
+        <svg class="chev" width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="why">Negative prices, gaps, impossible highs — caught the moment data arrives, and the run stops, instead of poisoning a result you'd trust by mistake.<span class="steal">borrowed from Pandera checks</span></div>
     </details></div>
-    <div class="tick">↓</div>
 
     <div class="stage"><details>
-      <summary><span class="ix">4</span><span class="verb">Replay<span class="said">Walk through history one day at a time — blind to tomorrow — and trade.</span></span><span class="more">why</span></summary>
-      <div class="body">The same code runs the backtest, the paper-trade, and (one day) the real account. Costs <em>and taxes</em> come out of every trade. This is where the one rule below lives. <span class="steal">Borrowed from Lean · Nautilus.</span></div>
+      <summary><span class="no">04</span><span class="verb">Replay<span class="said">Walk through history one day at a time — blind to tomorrow — and trade.</span></span>
+        <svg class="chev" width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="why">The same code runs the backtest, the paper-trade, and one day the real account. Costs <em>and taxes</em> come out of every trade. This is where the one rule below lives.<span class="steal">borrowed from Lean · Nautilus</span></div>
     </details></div>
-    <div class="tick">↓</div>
 
     <div class="stage"><details>
-      <summary><span class="ix">5</span><span class="verb">Grade<span class="said">The live market scores it. Our own backtest gets no vote.</span></span><span class="more">why</span></summary>
-      <div class="body">A pretty backtest curve is a hypothesis, not a result. Only money moving forward in a real, unseen future counts as a pass. <span class="steal">The honest floor — the market is the judge.</span></div>
+      <summary><span class="no">05</span><span class="verb">Grade<span class="said">The live market scores it. Our own backtest gets no vote.</span></span>
+        <svg class="chev" width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M1.5 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="why">A pretty backtest curve is a hypothesis, not a result. Only money moving forward, through a real unseen future, counts as a pass.<span class="steal">the honest floor — the market is the judge</span></div>
     </details></div>
 
   </div>
 
-  <h2>The one rule that keeps it honest</h2>
+  <div class="label">The one rule that keeps it honest</div>
   <div class="rule">
-    <h3>No peeking at the future.</h3>
-    <p>Every strategy decision can only use days that already happened. Tomorrow is physically unreadable — not "we promise not to look," but the data isn't there to look at.</p>
+    <h3>No peeking at <em>the future.</em></h3>
+    <p>Every decision can use only days that already happened. Tomorrow isn't "off-limits" — it physically isn't there to read.</p>
 
     <div class="time" aria-hidden="true">
-      <div class="day">Mon</div><div class="day">Tue</div><div class="day">Wed</div>
-      <div class="day now">Thu ◀ decide</div><div class="day future">Fri</div><div class="day future">Sat</div>
+      <div class="cell">MON</div><div class="cell">TUE</div><div class="cell">WED</div>
+      <div class="cell now">THU ◂ decide</div><div class="cell fut">FRI</div><div class="cell fut">SAT</div>
     </div>
-    <div class="axis">
-      <span class="can">◀ can use this</span>
-      <span class="cant">cannot see this ▶</span>
-    </div>
+    <div class="axis"><span class="a1">◂ can use this</span><span class="a2">cannot see this ▸</span></div>
 
-    <div class="vs">
-      <div class="row bad"><span class="mk">✕</span><span><b>A leaky backtest</b> peeks at Friday → looks like genius → loses real money the moment it's live.</span></div>
-      <div class="row good"><span class="mk">✓</span><span><b>Ours is blind to Friday</b> → looks modest → but if it wins, the win is real.</span></div>
+    <div class="cmp">
+      <div class="r"><svg class="ico x" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span><b>A leaky backtest</b> peeks at Friday → looks like genius → loses real money the moment it's live.</span></div>
+      <div class="r"><svg class="ico c" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5l3.5 3.5L14.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Ours is blind to Friday</b> → looks modest → but if it wins, the win is real.</span></div>
     </div>
   </div>
 
-  <h2>Is it built? The honest answer</h2>
+  <div class="label">Is it built? The honest answer</div>
   <div class="meter">
     <div class="mrow">
-      <div class="mlabel"><b>The design (the map)</b><span>~95%</span></div>
-      <div class="track"><div class="fill" style="width:95%;background:var(--safe)"></div></div>
+      <div class="top"><span class="nm">The design — the map</span><span class="pct">~95%</span></div>
+      <div class="track"><div class="fill" style="width:95%;background:var(--gold)"></div></div>
     </div>
     <div class="mrow">
-      <div class="mlabel"><b>The engine (the machine)</b><span>~5%</span></div>
-      <div class="track"><div class="fill" style="width:5%;background:var(--danger)"></div></div>
+      <div class="top"><span class="nm">The engine — the machine</span><span class="pct">~5%</span></div>
+      <div class="track"><div class="fill" style="width:5%;background:var(--leak)"></div></div>
     </div>
-    <div class="verdict">Verdict: <b>fix-first.</b> A world-class map; almost none of the territory is built yet. Today the repo is one 46-line script. A plan you can't run is not the thing — it's a picture of the thing.</div>
   </div>
+  <p class="verdict"><b>Verdict — fix-first.</b> &nbsp;A world-class map; almost none of the territory is built yet. Today the repo is one 46-line script. A plan you can't run isn't the thing — it's a picture of the thing.</p>
 
-  <div class="next">Next, and only this: ship <b>one real brick.</b> A test that proves "no peeking" actually holds → one symbol's data, cleaned and locked. Small, runnable, real — then earn the rest.</div>
+  <div class="next"><span class="h">Next — and only this</span>Ship <b>one real brick:</b> a test that proves "no peeking" actually holds → one symbol's data, cleaned and locked. Small, runnable, real — then earn the rest.</div>
 
-  <footer>Moonshot · designed to teach, not impress — through the Edward Tufte lens, benchmarked against 29 public quant repos. The machine is sound on paper; it becomes <em>real</em> only when one strategy earns a positive, after-tax grade from the market itself.</footer>
+  <footer>Moonshot — designed to teach, not impress. Art direction: Vignelli lens · clarity: Tufte lens · benchmarked against 29 public quant repos. The machine is sound on paper; it becomes real only when one strategy earns a positive, after-tax grade from the market itself.</footer>
 
-</div>
+</main>
 </body>
 </html>
